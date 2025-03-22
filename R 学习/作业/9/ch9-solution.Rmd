@@ -1,0 +1,134 @@
+---
+title: "第九章-作业"
+author: "你的名字(你的学号)"
+documentclass: ctexart
+output:
+  pdf_document: default
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+keywords:
+- 中文
+- R Markdown
+geometry: left=2.5cm,right=2cm,top=3cm,bottom=2.5cm
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 练习题
+
+1. 读取数据`Credit.csv`。读取后数据变量的名称为`credit`。
+```{r}
+credit = read.csv("./data/Credit.csv")
+```
+- 从数据`credit`中删除第一列
+```{r}
+credit = credit[, -1]
+```
+- 数据`credit`中，`Income`的最大值和最小值分别为多少？
+```{r}
+min_Income = min(credit[, "Income"])
+max_Income = max(credit[, "Income"])
+min_Income
+max_Income
+```
+- 从数据`credit`中删除`Rating`小于200对应的行。删除后，数据`credit`大约为332行。
+```{r}
+credit = credit[credit[,"Rating"]>=200, ]
+```
+
+- 把数据`credit`中位置为`(5,2)`的数字改为问好`?`。
+```{r}
+credit[5,2]="?"
+```
+
+- 把数据保存到当前工作目录的文件夹`data`中，保存的文件名为`Credit_Rating200.csv`。在保存的excel文件中，请不要包含数据的索引，即excel文件的第一列为`Income`。如需帮助，请查看函数`write.csv()`的帮助文档。请打开excel文件`Credit_Rating200.csv`确保你的操作是正确的。
+```{r}
+write.csv(credit, "./data/Credit_Rating200.csv", row.names=F)
+```
+
+- 从到当前工作目录的文件夹`data`中读取数据`Credit_Rating200.csv`,保存到变量`credit2`中。
+```{r}
+credit2 = read.csv("./data/Credit_Rating200.csv", na.strings = "?")
+```
+- 使用函数`head()`查看前6行，观察位置`(5,2)`的数据是什么?
+```{r}
+head(credit2)
+```
+
+- 删除数据`credit2`中包含缺失值的行。确定这时候数据`credit2`的第二行`Limit`为数值型。
+```{r}
+credit2 = na.omit(credit2)
+head(credit2)
+```
+    
+2. 读入文件`heart.pdf`，并做处理。处理之后，
+
+- 数据应该为一个数据框，不包含NA
+- 列`Age`, `RestBP`，`Chol`变为数值型的数据，其余列变为因子型数据
+- 列名为"Age"， "Sex" ，"ChestPain"，"RestBP"    "Chol"，"Fbs"，"RestECG"，"Thal"，"AHD"
+- 数据框为301行，9列
+- 最后请用函数`summary()`和`dim()`查看你的结果是否正确
+
+参考答案：
+
+- 载入要用到的R包
+```{r message=F, warning=F}
+library(pdftools)
+library(stringr)
+library(tidyr)
+library(tibble)
+library(dplyr)
+```
+
+- 读入`heart.pdf`
+```{r}
+heart <- pdf_text("./data/heart.pdf") %>% 
+    readr::read_lines()
+
+head(heart)
+```
+
+- 使用函数`str_squish()`去除字符间多余的空格，然后使用函数`strsplit()`把每一行的长字符根据空格分开为向量。最终的结果是一个列表。
+```{r}
+heart <- heart %>% 
+    str_squish() %>% 
+    strsplit(split = " ")
+tab_len = unlist(lapply(heart, length))
+```
+
+- 使用`ldply()`函数(在plyr包中)于列表中的每个元素，并将结果合并到一个数据框中。
+```{r}
+heart <- plyr::ldply(heart)
+head(heart)
+```
+
+- 数据框的列名为"Age"， "Sex" ，"ChestPain"，"RestBP"    "Chol"，"Fbs"，"RestECG"，"Thal"，"AHD"。
+```{r}
+colnames(heart) = heart[1, ]
+heart = heart[-1, ]
+```
+
+
+
+- 把列`Age`, `RestBP`，`Chol`变为数值型的数据，其余列变为因子型数据。
+```{r}
+heart[,c(1,4,5)] = lapply(heart[,c(1,4,5)], as.numeric)
+heart[,-c(1,4,5)] = lapply(heart[,-c(1,4,5)], as.factor)
+dim(heart)
+summary(heart)
+```
+- 删除包含NA的行
+```{r}
+wh = which(heart[, "Thal"] == "NA")
+heart = heart[-wh, ]
+heart[, "Thal"] = droplevels(heart[, "Thal"])
+dim(heart)
+summary(heart)
+```
+
+
+

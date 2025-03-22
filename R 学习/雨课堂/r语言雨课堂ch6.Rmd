@@ -1,0 +1,100 @@
+---
+title: "r语言雨课堂ch6"
+author: "陈建杰"
+date: "2024-10-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+Hi2_raw = read.csv("E:/桌面/r/雨课堂/Hitters2.csv",row.names = 1)
+Hi4_raw = read.csv("E:/桌面/r/雨课堂/Hitters4.csv",row.names = 1)
+
+```
+1、填补数据Hi2 raw中除了League,Division的所有列的缺失值。采用如下规则:所有列的缺失值都填补为其所在列去掉缺失值后的平均值。填补缺失值后该数据记为Hi2,计算Hi2除League,Division的所有列的中间值,所有中间值的中间值是什么?
+```{r}
+columns_to_fill <- Hi2_raw[,!(names(Hi2_raw) %in% c("League", "Division"))]
+for (col in names(columns_to_fill)) {
+  mean_value <- mean(columns_to_fill[[col]], na.rm = TRUE)
+  columns_to_fill[[col]][is.na(columns_to_fill[[col]])] <- mean_value
+}
+
+Hi2 <- Hi2_raw
+
+Hi2[,!(names(Hi2) %in% c("League", "Division"))] <- columns_to_fill
+
+column_medians <- sapply(Hi2[,!(names(Hi2) %in% c("League", "Division"))], median)
+median_of_medians <- median(column_medians)
+median_of_medians
+```
+
+
+2、对于数据Hi2,根据列2.League把列AtBat分成两个向量即League为A对应的AtBat为一个向量,League为N对应的AtBat为另一个向量,计算两个向量的t检验的p值。p值是多少?(提示:可以查看函数t.test()帮助文档)
+```{r}
+
+atbat_A <- Hi2$AtBat[Hi2$League == "A"]
+atbat_N <- Hi2$AtBat[Hi2$League == "N"]
+t_result <- t.test(atbat_A, atbat_N)
+p_value <- t_result$p.value
+
+```
+
+
+3.对于数据Hi2,根据列League把除League,Division的所有列根据League为N或者A分成两个向量,计算每一列对应的两个向量的t检验的p值。最小的p值对应的列是什么?
+
+
+```{r}
+#除了League,Division的所有列名字
+other_columns <- names(Hi2)[!(names(Hi2) %in% c("League", "Division"))]
+#遍历
+p_values <- numeric(length(other_columns))
+names(p_values) <- other_columns
+for (col in other_columns) {
+  values_A <- Hi2[Hi2$League == "A", col]
+  values_N <- Hi2[Hi2$League == "N", col]
+  t_result <- t.test(values_A, values_N)
+  p_values[col] <- t_result$p.value
+}
+#结果
+p_values
+sort(p_values)
+```
+
+
+
+4、对于数据Hi2的列League,使用题3得到的列(在这里,该列记为x)*(计算为HmRun)*填补缺失值,
+规则如下:对于League的每一个NA,找出与该NA对应的x的元素值最接近的20个元素值，然后计算这20个元素值对应的League的元素的N和A的比例(该20个元素对应的League可能包含NA,计算N和A的比例时去除NA),缺失值即填补为比例较高的N或A(如果比例相等,则填补为A)。填补缺失值后,League的A的比例是多少?(四舍五入)
+```{r}
+find_nearest_and_ratio <- function(target_value, data_frame, column_name) {
+  distances <- abs(data_frame[[column_name]] - target_value)
+  nearest_indices <- order(distances)[1:20]
+  nearest_data <- data_frame[nearest_indices, ]
+  league_values <- nearest_data$League[!is.na(nearest_data$League)]
+  n_count <- sum(league_values == "N")
+  a_count <- sum(league_values == "A")
+  if (n_count > a_count) {
+    return("N")
+  } else if (a_count > n_count) {
+    return("A")
+  } else {
+    return("A")
+  }
+}
+
+
+
+```
+
+
+5.填补数据Hi4 raw除了Division,NewLeague和League的所有列的缺失值。采用如下规则::所有列的缺失值都填补为其所在列去掉缺失值后的中间值。填补缺失值后该数据记为Hi4,计算Hi4除Division,NewLeaque和League的所有列的去掉最大10个数值和最小10个数值的平均值,所有平均值的中间值是什么?(四舍五入)
+```{r}
+
+```
+
+6记数据Hi4中除了6.Division,NewLeague和League的所有列组成的数据为Hi4 2,对Hi4 2进行标准化,即Hi4 2的每一列的元素都减去对应列的平均值,然后除以对应列的标准差。计算每一列去掉最大m个数值和最小m个数值的平均值,m=2:20,计算每一列所有平均值的中间值,最大的中间值对应的列是什么?
+```{r}
+
+```

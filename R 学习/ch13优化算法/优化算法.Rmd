@@ -1,0 +1,78 @@
+---
+title: "优化算法"
+author: "陈建杰（2022190065）"
+date: "2024-12-16"
+output: html_document
+---
+
+```{r}
+set.seed(123)
+X <- matrix(rnorm(500 * 100), 500, 100)
+y <- rnorm(500)
+
+```
+
+```{r}
+beta1 = solve(crossprod(X), crossprod(X, y))
+beta2 = solve(t(X) %*% X) %*% t(X) %*% y
+head(beta1)
+head(beta2)
+cat("两种方法得到的估计值的差值：", sum(abs(beta1-beta2)))
+```
+
+```{r}
+library(microbenchmark)
+microbenchmark(solve(crossprod(X), crossprod(X, y)), solve(t(X) %*% X) %*% t(X) %*% y)
+
+```
+
+# 梯度下降法
+
+```{r}
+ad = read.csv("./data/Advertising.csv")
+ad_normX = t((t(ad[, 1:3]) - colMeans(ad[, 1:3]))/apply(ad[,1:3], 2, sd))
+ad_normY = ad[, 4] - mean(ad[,4])
+```
+
+
+# 牛顿
+```{r}
+newton_lm = function(X, Y, beta_est = c(0, 0), epochs = 100,epsilon=1e-8)
+  {
+n = length(Y)
+
+beta_old = beta_est
+loss_vec = rep(NA, epochs)
+beta_mat = matrix(NA, nrow=epochs, ncol=length(beta_est))
+loss_vec[1] = mean((X %*% beta_est - Y)ˆ2)
+beta_mat[1, ] = beta_est
+for (i in 1:epochs) {
+Hessian = solve(t(X)%*%X/n)
+gradient = t(X) %*% (X%*%beta_est - Y) / n
+beta_est = beta_est - Hessian %*% gradient
+loss = mean((X%*%beta_est - Y)ˆ2)
+loss_vec[i+1] = loss
+beta_mat[i+1, ] = beta_est
+if(i %% 5 == 0) {
+cat("Epoch:", i, ";","loss: ", loss, "\n")
+}
+
+diff = sum((beta_est - beta_old)ˆ2)
+if (diff < epsilon){
+cat("Epoch:", i, ";","loss: ", loss, "\n")
+break
+}
+beta_old = beta_est
+}
+loss_vec = loss_vec[1:(i+1)]
+beta_mat = beta_mat[1:(i+1), ]
+epochs = i+1
+list(beta_est=beta_est, loss_vec=loss_vec,
+beta_mat=beta_mat, epochs=epochs)
+}
+X = ad_normX[, 1:2]
+Y = ad_normY
+newton_fit = newton_lm(X, Y)
+
+
+```

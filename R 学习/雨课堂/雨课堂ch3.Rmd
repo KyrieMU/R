@@ -1,0 +1,86 @@
+---
+title: "雨课堂ch3"
+author: "陈建杰"
+date: "2024-09-26"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hitter = read.csv("Hitters.csv")
+x = as.matrix(hitter[,c(1:13,19)])
+
+#x维度
+dim(x)
+
+
+#去除NA
+x2 = na.omit(x)
+dim(x2)
+#计算每列的平均值
+x2colmean = colMeans(x2)
+x2colmean
+#中位数
+median(x2colmean)
+```
+
+```{r}
+x3 = x2[,c(1:13)]
+x3 <- scale(x3)
+
+# 计算标准化后 x3 的每一列的均值和方差
+column_means <- colMeans(x3_standardized)
+column_variances <- apply(x3_standardized, 2, var)
+A = x3_standardized
+# 计算 B = A * A 的转置
+B <- t(A) %*% A
+
+# 计算 B 的对角和
+diagonal_sum <- sum(diag(B))
+diagonal_sum
+```
+
+```{r}
+salary = x[,"Salary"]
+salary = na.omit(salary)
+mean_salary=mean(salary)
+y = salary - mean_salary
+
+B_ni = solve(B)
+z=B_ni %*% t(A) %*% y
+
+abs(z)
+sort(abs(z))
+```
+
+
+```{r}
+cor(x3,y)
+sort(cor(x3,y))
+```
+
+
+```{r}
+cor(x3)
+cor_x3=max(cor(x3))
+```
+
+```{r}
+
+a=x3[,1]
+b=x3[,2]
+c= a*b
+D=cbind(a,b,c)
+
+det(t(D) %*% D)
+det(D %*% t(D))
+```
+
+```{r}
+
+w <- solve(t(D) %*% D) %*% t(D) %*% y
+w
+
+```

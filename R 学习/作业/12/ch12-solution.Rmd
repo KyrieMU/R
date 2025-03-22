@@ -1,0 +1,131 @@
+---
+title: "第十二章-作业"
+author: "你的名字(你的学号)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. 考虑如下的概率问题：
+
+从20个人中选出人数分别为3,4,5的三个委员会。A和B被选入同一个委员会的概率为多大？
+
+下面的代码提供了一种解决方案。请编写代码尝试提高模拟的计算效率？Hint: 可以尝试你知道的任何方法，包括向量化运算，内存分配，并行运算，以及改变解决方案流程。
+
+```{r}
+choosecomm = function(comdat, comsize){
+  committee = sample(comdat$whosleft, comsize)
+  comdat$numabchosen = length(intersect(1:2, committee))
+  if(comdat$numabchosen == 2)
+    comdat$countabsamecomm = comdat$countabsamecomm + 1
+  comdat$whosleft = setdiff(comdat$whosleft, committee)
+  return(comdat)
+}
+
+
+sim = function(nreps){
+  commdata = list()
+  commdata$countabsamecomm = 0
+  for(rep in 1:nreps){
+    commdata$whosleft = 1:20
+    commdata$numabchosen = 0
+    commdata = choosecomm(commdata, 5)
+    if(commdata$numabchosen > 0)next
+    commdata = choosecomm(commdata, 4)
+    if(commdata$numabchosen > 0)next
+    commdata = choosecomm(commdata, 3)
+  }
+  print(commdata$countabsamecomm/nreps)
+}
+
+system.time({sim(1e6)})
+```
+
+参考答案1：
+
+```{r}
+sim_2 = function(nreps){
+  same_comm = 0
+  for(i in 1:nreps){
+  comms = sample(20, 12, replace=F)
+  if(sum(comms[1:5]<3)==2 | sum(comms[6:9]<3)==2 | sum(comms[10:12]<3)==2) same_comm = same_comm + 1
+  }
+  print(same_comm /nreps)
+}
+
+system.time({sim_2(1e6)})
+```
+
+2. 下面我们分别从均匀分布，正态分布，泊松分布，卡方分布中产生'N'个随机数，并把这4列随机数合并为一个数据框。
+```{r}
+N = 5e5
+col1 <- runif (N, 0, 2)
+col2 <- rnorm (N, 0, 2)
+col3 <- rpois (N, 3)
+col4 <- rchisq (N, 2)
+df <- data.frame (col1, col2, col3, col4)
+```
+
+我们的任务是根据4列的和是否大于4，在数据框的第5列中记录"greater_than_4"或者"lesser_than_4"。下面是其中一种方式。请编写代码尝试提高模拟的计算效率？可以在作业答案中尝试多种方式，你的最小计算时间是多少？
+```{r}
+df2 = df
+system.time({
+  output = NULL
+  for (i in 1:nrow(df)) { 
+    if ((df[i, 'col1'] + df[i, 'col2'] + df[i, 'col3'] + df[i, 'col4']) > 4) { 
+      output <- c(output, "greater_than_4")
+    } else {
+      output <- c(output,"lesser_than_4")
+    }
+  }
+  df2$output = output
+})
+
+```
+
+
+参考答案1（考虑内存分配）：
+
+```{r}
+df3 = df
+system.time({
+  output = character(nrow(df))
+  for (i in 1:nrow(df)) { 
+    if ((df[i, 'col1'] + df[i, 'col2'] + df[i, 'col3'] + df[i, 'col4']) > 4) { 
+      output[i] <- "greater_than_4"
+    } else {
+      output[i] <- "lesser_than_4"
+    }
+  }
+  df3$output = output
+})
+
+```
+
+参考答案2（使用函数`which`）：
+```{r}
+df4 = df
+system.time({
+  want = which(rowSums(df)>4)
+  output = rep("less than 4", times = nrow(df))
+  output[want] = "greater than 4"
+  df4$output = output
+})
+
+
+```
+
+参考答案3（使用函数`ifelse`）：
+```{r}
+df5 = df
+system.time({
+  output = ifelse(rowSums(df)>4, "greater_than_4", "lesser_than_4")
+  df5$output = output
+})
+
+```
+
+
+

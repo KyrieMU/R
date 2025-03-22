@@ -1,0 +1,154 @@
+---
+title: "R语言雨课堂ch5 Data Frame"
+author: "陈建杰"
+date: "2024-10-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R语言雨课堂ch5 Data Frame
+第一题
+在数据Hi2 raw中,去除1.所有包含NA的行,执行该操作之后,数据记为Hi2,数据Hi2的维度是什么?
+```{r}
+Hi2_raw =  read.csv("E:/桌面/r/雨课堂/雨课堂ch5/Hitters2.csv",row.names = 1)
+Hi3_raw =  read.csv("E:/桌面/r/雨课堂/雨课堂ch5/Hitters3.csv",row.names = 1)
+HI2 = na.omit(Hi2_raw)
+dim(HI2)
+
+```
+
+
+第2题
+在数据Hi3 raw中,去除所有包含NA的行,没有NA的数据记为Hi3。根据球员名字(数据的行名)合并数据Hi2和Hi3为Hi,Hi没有重复的行,数据Hi的维度是什么?
+```{r}
+HI3 = na.omit(Hi3_raw)
+#合并
+HI <- merge(HI2, HI3, by = "row.names", all = FALSE)
+HI_1 = HI[HI$CRuns.y,]
+dim(HI)
+dim(HI_1)
+```
+
+3.分别计算联赛(League)为A和N的球员薪资(Salary)的平均值，哪组队员薪资平均值较高?
+```{r}
+avg_salary_A <- mean(HI[HI$League.x == "A", ]$Salary)
+avg_salary_N <- mean(HI[HI$League.x == "N", ]$Salary)
+avg_salary_A
+avg_salary_N
+```
+
+
+```{r}
+```
+
+4计算数据Hi中,除了League,Division,NewLeague的所有列的最大值和最小值的差值,所有差值的中间值是什么?
+```{r}
+columns_to_calculate <- Hi[,!(names(Hi) %in% c("League.x", "League.y","Division.x", "Division.y","NewLeague"))]
+
+# 计算每列的最大值和最小值的差值
+differences <- sapply(columns_to_calculate, function(col) max(col) - min(col))
+differences1 <- unique(differences)
+# 计算所有差值的中间值
+median_of_differences <- median(differences1)
+
+# 输出结果
+median_of_differences
+differences1
+```
+
+
+5/计算数据Hi中,除了League,Division,NewLeague,Hi的所有列与Salary的Pearson相关系数,并把相关系数的绝对值按照从大到小排序,与Salary相关关系绝对值最大的两列是什么?(提示:可以查看函数cor()帮助文档)
+
+
+```{r}
+# 选择除了特定列之外的列
+columns_to_calculate <- HI[,!(names(HI) %in% c("League.x", "League.y","Division.x", "Division.y","NewLeague"))]
+numeric_columns <- sapply(columns_to_calculate, is.numeric)
+columns_to_calculate <- columns_to_calculate[,numeric_columns]
+# 计算与 Salary 的相关系数
+correlations <- cor(columns_to_calculate, HI$Salary)
+
+
+# 提取列名和相关系数到一个数据框
+cor_df <- data.frame(column = names(columns_to_calculate), correlation = correlations)
+
+# 按相关系数绝对值排序
+sorted_cor_df <- cor_df[order(abs(cor_df$correlation), decreasing = TRUE),]
+
+# 输出相关关系绝对值最大的两列
+cat("与 Salary 相关关系绝对值最大的两列是", sorted_cor_df$column[1], "和", sorted_cor_df$column[2])
+sorted_cor_df
+```
+6 计算数据Hi中,除了League,Division,NewLeague,Hi的所有列与Salary的Spearman相关系数,并把相关系数的绝对值按照从小到大排序,与Salary的Spearman相关关系绝对值最小的两列是什么?(提示:可以查看函数cor()帮助文档)
+```{R}
+
+```
+
+7、对于数据Hi2 raw的列7.CRBI,使用如下规则填补缺失值:CRBI的缺失值都填补为该列去掉缺失值后的平均值。填补缺失值后,CRBI的中间值是什么?
+```{R}
+
+# 计算该列去掉缺失值后的平均值
+mean_value <- mean(Hi2_raw$CRBI, na.rm = TRUE)
+
+# 填补缺失值
+Hi2_raw$CRBI[is.na(Hi2_raw$CRBI)] <- mean_value
+
+# 计算填补后的中间值
+median_value <- median(Hi2_raw$CRBI)
+
+# 输出中间值
+median_value
+```
+
+8.填补数据Hi2 raw的列Runs的缺失值,采用如下规则填补缺失值: 找到与Runs缺失值的队员的HmRun值最接近的10位队员(注:10位队员不包括HmRun中有缺失值的队员),然后使用该10位队员的Runs的平均值填补缺失值。缺失值是什么?
+
+```{r}
+
+# 找到 HmRun 中没有缺失值的队员
+valid_indices <- which(!is.na(Hi2_raw$HmRun))
+
+# 计算每个队员的 HmRun 与缺失值队员的 HmRun 的差值绝对值
+diff_abs <- sapply(valid_indices, function(i) abs(Hi2_raw$HmRun[i] - Hi2_raw$HmRun[is.na(Hi2_raw$Runs)]))
+
+# 找到差值绝对值最小的 10 个索引（如果不足 10 个，取全部）
+sorted_indices <- valid_indices[order(diff_abs)[1:min(10, length(valid_indices))]]
+
+# 计算这 10 个队员的 Runs 的平均值
+mean_value <- mean(Hi2_raw$Runs[sorted_indices], na.rm = TRUE)
+
+# 填补缺失值
+Hi2_raw$Runs[is.na(Hi2_raw$Runs)] <- mean_value
+
+# 输出填补后的结果
+Hi2_raw
+
+
+
+
+```
+10.对于数据Hi2 raw的列League,使用如下规则填补缺失值:League的缺失值都填补为该列去掉缺失值后比例高的类。填补缺失值后,League的A的比例是多少?
+```{R}
+# 计算该列去掉缺失值后各值的比例
+league_counts <- table(Hi2_raw$League[!is.na(Hi2_raw$League)])
+total_valid <- sum(league_counts)
+league_proportions <- league_counts / total_valid
+
+# 找到比例高的类
+dominant_league <- names(league_proportions)[which.max(league_proportions)]
+
+# 填补缺失值
+Hi2_raw$League[is.na(Hi2_raw$League)] <- dominant_league
+
+# 计算填补后 A 的比例
+new_league_counts <- table(Hi2_raw$League)
+new_total <- sum(new_league_counts)
+a_proportion <- new_league_counts["A"] / new_total
+
+# 输出 A 的比例
+a_proportion
+
+```
+

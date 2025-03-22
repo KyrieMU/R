@@ -1,0 +1,115 @@
+---
+title: "yuketang"
+author: "Chen Jianjie"
+date: "2024-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hitter = read.csv("Hitters.csv")
+salary = hitter[,"Salary"]
+league = hitter[,"League"]
+hits = hitter[,"Hits"]
+```
+
+salary的长度
+```{r}
+length_salary = length(salary)
+length_salary
+```
+
+
+```{r}
+num_missing <- sum(is.na(salary))
+cat("salary 向量中有", num_missing, "个缺失值。\n")
+```
+
+```{r}
+
+salary_NA = na.omit(salary)
+A = mean(salary_NA)
+A
+```
+
+```{r}
+sorted_salary <- sort(salary_NA)
+trimmed_salary <- sorted_salary[11:(length(sorted_salary) - 10)]
+B= length(trimmed_salary)
+# 计算平均值并保留两位小数
+average <- round(mean(trimmed_salary), 2)
+
+cat("去除数值最小的 10 个元素和数值最大的 10 个元素后的平均值为：", average, "\n")
+
+```
+
+```{r}
+B= median(salary_NA)
+B
+```
+
+```{R}
+
+salary_200 = salary_NA[salary_NA>200]
+sum_salary_200 = sum(salary_200)
+
+```
+
+
+```{r}
+
+x9 = salary_NA[salary_NA %% 2 == 0]
+
+mean(x9)
+
+
+
+# 提取 league 为 "N" 对应的 hits 元素
+hits_for_N <- hits[league == "N"]
+
+# 计算平均值
+average_hits_for_N <- mean(hits_for_N)
+
+cat("league 为 N 对应的向量 hits 的元素的平均值是：", average_hits_for_N, "\n")
+```
+```{r}
+
+salary_for_A <- salary[league == "A"]
+
+# 去除缺失值
+salary_for_A_no_na <- salary_for_A[!is.na(salary_for_A)]
+
+# 计算平均值
+average_salary_for_A <- mean(salary_for_A_no_na)
+
+cat("league 为 A 对应的向量 salary 的元素的平均值是：", average_salary_for_A, "\n")
+```
+
+
+```{r}
+index <- which(hits > 100 & league == 'N')
+
+# 根据索引提取对应的 salary 并计算平均值
+average_salary <- mean(salary_NA[index])
+
+cat("向量 hits 大于 100 且 league 为 'N'的队员的平均工资是：", average_salary, "\n")
+```
+
+
+```{r}
+result <- salary / hits
+average_result <- mean(result)
+cat("向量 salary 除以向量 hits 的结果的平均值是：", average_result, "\n")
+
+```
+
+
+```{r}
+X13 = length(league[league = "N"])
+
+X13
+
+```

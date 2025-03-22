@@ -1,0 +1,171 @@
+---
+title: "r语言雨课堂ch8"
+author: "陈建杰（2022190065）"
+date: "2024-11-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1
+假设有3个候选人,35个投票人,每个投票人随机地投票给任一候选人。求存在并列第一的概率。例如,有两个人都得15票。
+13%
+23%
+33%
+43%
+
+```{r}
+#老师的示范
+N=10000
+su = 0
+for(i in 1:N){
+s=sample(1:3,35,replace = T)
+ts = table(s)
+if(sum(ts == max(ts))==2)su=su+1
+}
+su/N
+
+```
+
+# 2
+假设你每天都随机地找到一张牌(可以是52张牌的任一张),你平均需要花多少天时间才能凑齐一幅完整的扑克牌?
+232
+236
+240
+244
+
+
+```{r}
+#豆包
+#设置模拟次数
+num_simulations <- 10000
+
+# 用于存储每次模拟凑齐一副牌所需的天数
+days_to_complete <- numeric(num_simulations)
+
+for (i in 1:num_simulations) {
+    # 用于记录已经抽到的不同牌的集合
+    drawn_cards <- character()
+
+    # 天数计数器
+    days <- 0
+
+    while (length(unique(drawn_cards)) < 52) {
+        # 随机抽取一张牌
+        new_card <- sample(1:52, 1)
+
+        # 将抽到的牌添加到已抽牌集合中
+        drawn_cards <- c(drawn_cards, new_card)
+
+        days <- days + 1
+    }
+
+    days_to_complete[i] <- days
+}
+
+# 计算平均天数
+average_days <- mean(days_to_complete)
+
+print(average_days)
+
+```
+
+
+# 3
+有两个骰子,两个骰子点数之差为3,4或者5的概率是什么?
+30%
+33%
+36%
+39%
+
+```{r}
+x_t=0
+n=100000
+
+for(i in 1:n){
+x1=sample(1:6,1,replace = F,prob = NULL)
+x2=sample(1:6,1,replace = F,prob = NULL)
+x=abs(x1-x2)
+  if(x==3|x==4|x==5){x_t=x_t+1}
+}
+x_t
+x_t/n
+```
+# 4
+现有400个人，每个人的生日有可能是一年365天中的任一天。记X为一年中至少有1个人生日的天数,X的均值Ex是什么?
+243
+253
+256
+263
+
+```{r}
+n=1000
+dat=numeric(400)
+for(i in 1:n)
+{
+date = sample(1:365,400,replace = T)
+x[i]=length(unique(date))
+}
+ex=mean(x)
+ex
+```
+
+# 5
+从一幅52张的扑克牌中随机抽取5张牌,刚好有3张A的概率是多少?
+0.001
+0.002
+0.003
+0.004
+
+```{r}
+# 设置随机数种子，以便结果可重现（可根据需要选择是否设置）
+set.seed(2)
+
+# 重复模拟的次数
+num_simulations <- 10000
+
+# 用于记录刚好有3张A的次数
+count_3_aces <- 0
+
+for (i in 1:num_simulations) {
+    # 模拟从52张牌中抽取5张牌
+    drawn_cards <- sample(1:52, 5, replace = FALSE)
+
+    # 判断抽取的牌中是否刚好有3张A
+    # 扑克牌中A对应的编号假设为1、2、3、4（这里只是一种假设的对应方式方便计算）
+    num_aces <- sum(drawn_cards %in% 1:4)
+
+    if (num_aces == 3) {
+        count_3_aces <- count_3_aces + 1
+    }
+}
+
+# 计算概率
+probability <- count_3_aces / num_simulations
+print(probability)
+
+```
+
+# 6
+随机从集合{1,2,3,4,5,6,7}抽3个数字,分别记为a,b,c,求a+b>c的概率。
+0.49
+0.59
+0.69
+0.79
+```{r}
+x=0
+n=10000
+for(i in 1:n){
+
+x1=sample(1:7,3)
+x1
+a=x1[1]
+b=x1[2]
+c=x1[3]
+  if(a+b>c){x=x+1}
+}
+x
+x/n
+```

@@ -1,0 +1,279 @@
+---
+title: "第八章(随机数生成与模拟) -作业"
+author: "你的名字(你的学号)"
+documentclass: ctexart
+output:
+  pdf_document: default
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+keywords:
+- 中文
+- R Markdown
+geometry: left=2.5cm,right=2cm,top=3cm,bottom=2.5cm
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 练习题
+
+1. 假设一个电子仪器的使用寿命服从一个指数分布$\mbox{exp}(\lambda)$，制造商想知道，如果他们测试𝑐个产品，至少𝑡个产品的使用寿命大于ℎ小时的概率是多少？设置$c=100,h=2,t=15,\lambda=1$。可以使用R自带函数`rexp()`。
+```{r}
+cc = 100  # c
+h = 2     # h
+tt = 15   # t
+lambda = 1  
+success = rep(0, 1000)
+for(i in 1:1000) {
+  success[i] = sum(rexp(cc, rate=lambda) > h) >= tt
+}
+mean(success)
+```
+
+2. 假设总体为$\{x_1,x_2,\ldots,x_n\}$，编程实现从该总体中**无放回**抽取样本$\{y_1,y_2,\ldots,y_k\}$($K\leq n$)。**不能**使用R自带的函数`sample()`，如果需要，可以使用R自带函数`runif()`。下面是一个可能的流程：
+
+    - 初始集合为$\{3,2,20,5,6,100,99,80,7,17\}$
+    - 还没有被抽取的元素的集合为初始集合
+    - 已抽取元素集合为空集
+    - 循环$5$次：
+        - 从还没有被抽取的元素的集合中抽取一个元素
+        - 把该元素抽取到的元素加入到已抽取元素集合
+        - 把该元素从还没有被抽取的元素的集合中删除
+        
+```{r}
+x = c(3,2,20,5,6,100,99,80,7,17)
+y = c()
+k = 5
+for(i in 1:k){
+    n = length(x)
+    u = runif(1)
+    j = 0
+    while(TRUE){
+       j = j+1
+       if(u<(j/n)) break
+    }
+    y = c(y, x[j])
+    x = x[-j]
+}
+x 
+y
+```
+
+3. 随机变量$X$的分布律为
+$$P(X=1)=0.1, P(X=2)=0.3, P(X=5)=0.6$$
+    - 计算$X$的累积分布函数
+    - 编程产生$X$的随机数(可以使用函数`runif()`)
+    
+    $X$的累积分布函数为
+    $$
+    F_X(x) = \begin{cases}0&x<1\\
+    0.1 & 1\leq x<2\\
+    0.4 & 2\leq x<5\\
+    1 & 5\leq x
+    \end{cases}
+    $$
+```{r}
+
+discreteRandNum = function(N){
+  Fx = c(0.1, 0.4, 1)
+  xx = c(1,2,5)
+  X = rep(NA, N)
+  for(i in 1:N){
+    u = runif(1)
+    X[i] = xx[which(u<Fx)[1]]
+  }
+  X 
+}
+
+N = 1000
+table(discreteRandNum(N))/N
+```
+    
+4. 产生$\mbox{Poisson}(\lambda)$的随机数。尝试$\lambda=5$。注：**不能**使用R自带的函数`rpois()`，如果需要，可以使用R自带函数`runif()`
+
+    泊松分布的分布律为
+$P(X=x)=\frac{e^{-\lambda} \lambda^x}{x!}$。它的递归表达式为
+$$
+p(x+1)=\frac{\lambda}{x+1}p(x).
+$$
+```{r}
+poissonRandNum = function(lambda){
+  px = exp(-lambda)
+  Fx = px
+  x = 0
+  u = runif(1)
+  while(Fx < u){
+    px = lambda*px/(x+1)
+    x  = x+1
+    Fx = Fx + px
+  }
+  return(x)
+}
+
+N = 1000
+X = rep(NA, N)
+for(i in 1:N)X[i] = poissonRandNum(5)
+
+# 使用函数dpois()验证函数poissonRandNum()
+a = table(X)/N
+b = round(dpois(as.numeric(names(a)), lambda=5), digits=3)
+plot(as.numeric(a), b,xlab="Prob", ylab="Prob from dpois")
+lines(c(0,0.2),c(0,0.2),col="red",lwd=2)
+```
+
+
+
+
+5. 考虑连续随机变量$X$，它的概率密度函数为
+$$
+f_X(x)=\frac{\mbox{exp}(-x)}{(1+\mbox{exp}(-x))^2} \quad -\infty<x<\infty
+$$
+该分布被称为标准逻辑分布(standard logistic distribution). 请同学们使用逆变换法产生服从该分布的随机数。
+
+随机变量$X$的累积分布函数为
+$$
+\begin{align}
+F_X(x)&=&\int_{\infty}^x \frac{e^{-t}}{(1+e^{-t})^2} dt\\
+&=& \frac{1}{1+e^{-x}}
+\end{align}
+$$
+因此，令$u=\frac{1}{1+e^{-x}}$，可以得到，
+$$
+x = -\mbox{log}(\frac{1}{u}-1)
+$$
+```{r}
+rStandardLogistic = function(N){
+  u = runif(N)
+  - log(1/u - 1)
+}
+
+rand = rStandardLogistic(10000)
+hist(rand, freq=F, ylim=c(0, 0.4))
+a = seq(-6, 6, length.out = 100)
+lines(a, exp(-a)/(1+exp(-a))^2, col="red")
+lines(a, dnorm(a), col="blue", lty=2)
+```
+
+
+6. 考虑gamma分布$\Gamma(\lambda, m)$，它的概率密度函数为
+$$
+f(x)=\lambda^m x^{m-1} e^{-\lambda x}/\Gamma(m) \quad x>0
+$$
+对于gamma分布，我们无法得到它的累积分布函数，以及累积分布函数的逆函数，因此我们无法使用逆变换法产生随机数。在这里，我们将使用拒绝法产生随机数。
+我们可以让$h(x)$为指数分布$\mu e^{-\mu x},x>0$。
+
+    指数分布的随机数很容易通过逆变换法得到，$-\mbox{log}(U)/\mu$，其中，$U\sim Uniform(0,1)$;
+    
+    在拒绝法中，我们需要计算$k$，
+$$
+k=\mbox{sup}_{x>0}\frac{f(x)}{h(x)}=\mbox{sup}_{x>0}\frac{\lambda^m x^{m-1} e^{(\mu-\lambda) x}}{\mu \Gamma(m)}
+$$
+从上式可以看到，当$m<1$或$\lambda \leq \mu$时，$k$将是无穷大。因此，在这里，我们假设$m>1$，且选择$\mu<\lambda$。
+    接着，我们可以通过求上式的导数得到，当$x=(m-1)/(\lambda-\mu)$时，$k$值可以取到最大值
+    $$
+    k=\frac{\lambda^m(m-1)^{m-1}e^{-(m-1)}}{\mu(\lambda-\mu)^{m-1}\Gamma(m)}
+    $$
+    在这里，我们可以调节$\mu$的大小，改变$k$的值。我们希望$k$尽可能的小。通过上式可以看到，当$\mu(\lambda-\mu)^{m-1}$最大时，$k$最小。因此，我们通过求$\mu(\lambda-\mu)^{m-1}$的导数，得到当$\mu=\lambda/m$时， $k$最小。这时，$k=m^me^{-(m-1)}/\Gamma(m)$。
+    请同学们编程产生服从gamma分布的随机数。尝试$\lambda=1, m=2$。注：$\Gamma(m)$可以通过函数`gamma(m)`计算。
+    
+```{r}
+expRandNum = function(mu){
+  u = runif(1)
+  -log(u)/mu
+}
+
+gammaRandNum = function(lambda, m){
+  mu = lambda/m
+  f = function(x)lambda^m*x^(m-1)*exp(-lambda*x)/gamma(m)
+  h = function(x)mu*exp(-mu*x)
+  k = m^m*exp(-(m-1))/gamma(m)
+  while(TRUE){
+    x = expRandNum(mu)
+    u = runif(1)
+    if(u < f(x)/(h(x)*k))return(x)
+  }
+}
+
+N = 10000
+g = rep(0, N)
+for(i in 1:N)g[i] = gammaRandNum(1, 2)
+hist(g, breaks = 20, freq=F, xlab="x", ylab="pdf f(x)", main="")
+x = seq(0, max(g), .1)
+lines(x, dgamma(x, 2, 1), col="red", lwd=2)
+
+```
+
+7. 中心极限定理：当$X_1,X_2,\ldots,X_n$独立同分布，且$E(X)=\frac{1}{n}\mu$，
+$Var(X)<\infty$时，定义$\bar{X}=\frac{1}{n}\sum_{i=1}^n X_i$，
+$\frac{\sqrt{n}(\bar{X}-\mu)}{\sigma}$近似服从标准正态分布。因此，根据中心极限定理，我们可以产生服从标准正态分布的随机数。例如，我们可以让$X_i\sim \mbox{Uniform}(0,1),i=1,\ldots,n$,$n$是一个较大的数。这时$EX=0.5,Var(X)=1/12$。
+
+    - 请根据中心极限定理编程产生服从标准正态分布的随机数。
+    - 并产生服从正态分布$N(30,4)$的随机数。
+
+```{r}
+# 产生服从标准正态分布的随机数
+normRandNum = function(n){
+  sqrt(n)*(mean(runif(n)) - 0.5)/sqrt(1/12)
+}
+
+N = 10000
+normNum = rep(0, N)
+for(i in 1:N)normNum[i] = normRandNum(100)
+hist(normNum, breaks = 20, freq=F, xlab="x", ylab="pdf f(x)", main="pdf of N(0, 1)")
+x = seq(-max(abs(normNum)), max(abs(normNum)), .1)
+lines(x, dnorm(x), col="red", lwd=2)
+
+
+# 产生服从正态分布$N(30,2)$的随机数
+
+GnormRandNum = function(mu, sigma, n=100){
+  normRandNum(n)*sigma + mu
+}
+
+N = 10000
+normNum = rep(0, N)
+for(i in 1:N)normNum[i] = GnormRandNum(30, 2)
+hist(normNum, breaks = 20, freq=F, xlab="x", ylab="pdf f(x)", main="pdf of N(30, 4)")
+x = seq(-max(abs(normNum)), max(abs(normNum)), .1)
+lines(x, dnorm(x, 30, 2), col="red", lwd=2)
+```
+
+8. 假设$X$和$Y$都是服从标准正态分布的随机变量，求$E[\mbox{max}(X,Y)]$。
+```{r}
+N = 10000
+max_N = rep(0, N)
+for(i in 1:N){
+   u = rnorm(2)
+   max_N[i] = max(u)
+}
+mean(max_N)
+```
+
+9. 蒙提霍尔问题：假如你参与一个有主持人的游戏，你会看见三扇关闭了的门，其中一扇的后面有一辆汽车，另外2扇门后面各是一只山羊，你看不见门后面的情况，但主持人知道一切。你被主持人要求在三扇门中选择一扇，但不能打开，在你选定之后主持人开启了另一扇后面有山羊的门，然后你可以坚持原来选定的门，也可以改主意重新选择。问题是：改与不改对选中汽车的概率有影响吗？请使用模拟实验的方法回答该问题。
+
+```{r}
+N = 10000
+change = rep(0, N)   # 改变选择的结果
+NOTchange = rep(0, N) # 不改变选择的结果
+for(i in 1:N){
+  car_position = sample(1:3, 1)
+  first_choice = sample(1:3, 1)
+  if(car_position==first_choice){
+    host_open = sample(setdiff(1:3, car_position), 1)
+    change[i] = 0
+    NOTchange[i] = 1
+  }else{
+    host_open = setdiff(1:3, c(car_position, first_choice))
+    change[i] = 1
+    NOTchange[i] = 0
+  }
+}
+mean(change)
+mean(NOTchange)
+```
+
+
